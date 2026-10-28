@@ -1,0 +1,462 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Башня дробей</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Rubik:wght@500;700;900&display=swap">
+<style>
+:root{
+  --night:#170b24; --night2:#24113a; --panel:#2c1746; --line:#4a2d6b;
+  --parch:#f6e7bd; --parch2:#e6cf94; --ink:#24120a; --ink2:#6a4a2a; --wood:#5c3a12;
+  --pumpkin:#ff8a1f; --pumpkin2:#ffb35c; --slime:#9dff5a; --violet:#c79bff;
+  --okbg:#dff7c9; --okbd:#2f8f1c; --badbg:#ffd9d6; --badbd:#c0262f;
+  --text:#f2e9ff; --muted:#bfa9dc;
+  --display:'Rubik Wet Paint','Rubik',system-ui,sans-serif;
+  --body:'Rubik',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--night:#170b24}}
+:root[data-theme="dark"]{--night:#170b24}
+*{box-sizing:border-box}
+html{background:var(--night)}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,#3a1858 0%,var(--night2) 40%,var(--night) 100%) fixed,var(--night);
+  color:var(--text);font-family:var(--body);font-size:17px;line-height:1.4;min-height:100vh}
+button{font-family:var(--body);cursor:pointer}
+:focus-visible{outline:3px solid var(--slime);outline-offset:2px}
+.app{max-width:1280px;margin:0 auto;padding:10px max(16px,env(safe-area-inset-left,0px)) 14px;display:grid;grid-template-columns:200px 1fr;grid-template-rows:auto 1fr;gap:8px 16px;height:100vh;min-height:600px}
+.top{grid-column:1/-1;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{font-family:var(--display);font-size:32px;color:var(--pumpkin);text-shadow:0 3px 0 #5a1d00;line-height:1;white-space:nowrap}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps button{border:2px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:5px 12px;font-weight:700;font-size:14px}
+.steps button.on{border-color:var(--pumpkin);color:#fff;background:#4a2560}
+.steps button.done::after{content:" ✓";color:var(--slime)}
+.tower{min-height:0;display:flex;align-items:flex-end;justify-content:center}
+.tower svg{height:100%;max-height:600px;width:auto;max-width:100%}
+.twf{cursor:pointer}
+.main{min-height:0;display:flex;flex-direction:column}
+.card{background:linear-gradient(var(--parch),var(--parch2));color:var(--ink);border:5px solid var(--wood);border-radius:20px;box-shadow:0 5px 0 var(--wood);padding:12px 20px 14px;flex:1;display:flex;flex-direction:column;min-height:0}
+.chead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.chead h2{font-family:var(--display);font-weight:400;font-size:30px;color:#6b2f86;margin:0;line-height:1.1}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dots button{width:30px;height:30px;border-radius:50%;border:2px solid #a07a48;background:#fff6dc;font-weight:900;font-size:13px;color:var(--ink2);padding:0}
+.dots button.cur{border-color:#6b2f86;box-shadow:0 0 0 3px rgba(107,47,134,.25)}
+.dots button.ok{background:#bff0a0;border-color:#2f8f1c;color:#163d08}
+.dots button.half{background:#ffe2b8;border-color:#d07a1f}
+.dots button.shown{background:#e6d6ff;border-color:#6b2f86}
+.q{font-size:21px;font-weight:700;margin:8px 0 2px}
+.q .tip{display:block;font-size:15px;font-weight:500;color:var(--ink2);margin-top:2px}
+.fig{display:flex;justify-content:center;align-items:center;margin:4px 0;min-height:0}
+.fig svg{max-width:100%;height:auto;display:block}
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;font-weight:900;margin:0 .1em}
+.fr>span:first-child{border-bottom:2.5px solid currentColor;padding:0 .18em 1px}
+.fr>span:last-child{padding-top:1px}
+.chips{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:6px 0}
+.chip{min-width:74px;padding:6px 14px;border-radius:16px;border:3px solid #6b2f86;background:#fff;color:#2b1446;font-size:24px;box-shadow:0 4px 0 #4a1f63;transition:transform .1s}
+.chip:hover:not([disabled]){transform:translateY(-2px)}
+.chip.no{opacity:.45;text-decoration:line-through;border-color:#c0262f;box-shadow:none;cursor:not-allowed}
+.chip.yes{background:#dff7c9;border-color:#2f8f1c;box-shadow:0 4px 0 #2f6b10}
+.chip[disabled]{cursor:default}
+.fbz{min-height:58px;margin-top:4px}
+.fb{border-radius:12px;padding:7px 12px;font-weight:500;font-size:16px;line-height:1.35}
+.fb.bad{background:var(--badbg);color:#5a0d12;border:2px solid var(--badbd)}
+.fb.ok{background:var(--okbg);color:#163d08;border:2px solid var(--okbd)}
+.fb.show{background:#efe3ff;color:#2b1446;border:2px solid #6b2f86}
+.fb b{font-weight:900}
+.fb .fr>span:first-child{border-bottom-width:2px}
+.navrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:auto;padding-top:6px}
+.btn{border:0;border-radius:14px;padding:10px 20px;font-weight:900;font-size:17px;background:var(--pumpkin);color:#2b1000;box-shadow:0 4px 0 #8a3c00}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #8a3c00}
+.btn.ghost{background:#efe0b8;color:var(--ink2);box-shadow:0 4px 0 #a07a48}
+.btn.green{background:#5fd13a;color:#0f2a00;box-shadow:0 4px 0 #2f6b10}
+.btn.pulse{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 4px 0 #2f6b10,0 0 0 6px rgba(95,209,58,.35)}}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}
+.shake{animation:shake .35s}
+/* number line */
+.nl .hit{fill:transparent;cursor:pointer}
+.nl .hov{opacity:0;transition:opacity .1s}
+.cell{cursor:pointer}
+.cell:hover{filter:brightness(.93)}
+/* ending */
+.snap{text-align:center;color:var(--muted);font-weight:700;margin:0 0 6px;font-size:14px}
+.cert{padding:10px 20px;max-width:860px;margin:0 auto;width:100%;flex:none}
+.cert-top{text-align:center;border-bottom:2px dashed rgba(92,58,18,.3);padding-bottom:6px;margin-bottom:10px}
+.cert-t{font-family:var(--display);font-size:28px;color:#6b2f86;line-height:1.1}
+.cert-d{color:var(--ink2);font-weight:700;font-size:14px}
+.cert-head{display:flex;gap:24px;align-items:center;justify-content:center}
+.ring{width:112px;height:112px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--rc) calc(var(--p)*1%),rgba(92,58,18,.15) 0)}
+.ring.ok{--rc:#2f8f1c}.ring.bad{--rc:#e07a1f}
+.ring-in{width:88px;height:88px;border-radius:50%;background:#fbf3dc;display:grid;place-items:center;text-align:center;align-content:center}
+.ring-in b{font-size:26px;font-weight:900;line-height:1}.ring-in span{font-size:10px;color:var(--ink2);font-weight:700}
+.cert-side{display:grid;gap:5px}
+.verdict{font-weight:900;font-size:19px;padding:4px 12px;border-radius:12px;display:inline-block}
+.verdict.ok{background:var(--okbg);color:#163d08}.verdict.bad{background:#ffe3c7;color:#7a3a00}
+.meta{color:var(--ink2);font-weight:700;font-size:13.5px}
+.bars2{display:grid;gap:5px;margin:10px 0 4px}
+.b2{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;font-weight:700;font-size:14px}
+.b2bar{height:11px;border-radius:6px;background:rgba(92,58,18,.15);overflow:hidden}.b2bar span{display:block;height:100%;background:#8a5ad0}
+.mis{margin-top:8px;background:rgba(255,255,255,.45);border-radius:12px;padding:6px 12px;max-height:130px;overflow:auto}
+.mis-t{font-weight:900}.mis ul{margin:2px 0 0;padding-left:20px;font-size:13px;columns:2;column-gap:24px}.mis li{margin:2px 0;break-inside:avoid}
+.endnav{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.report{width:100%;height:90px;margin-top:6px}
+.todo{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media (max-width:860px){.cert-head{flex-wrap:wrap}.app{grid-template-columns:1fr;height:auto}.tower{display:none}.logo{font-size:26px}.q{font-size:18px}}
+</style>
+<div class="app">
+  <div class="top"><div class="logo">Башня дробей</div><nav class="steps" id="steps"></nav></div>
+  <div class="tower" id="tower"></div>
+  <main class="main" id="main"></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
+<script>
+/* ---------- helpers ---------- */
+function h(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(v==null||v===false)continue;if(k==='html')e.innerHTML=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v===true?'':v);}
+  for(const c of kids.flat()){if(c==null)continue;e.append(c.nodeType?c:document.createTextNode(c));}return e;}
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+const frx=(n,d)=>`<span class="fr"><span>${n}</span><span>${d}</span></span>`;
+const fr=(n,d)=>d===1?`<b>${n}</b>`:`<span class="fr"><span>${n}</span><span>${d}</span></span>`;
+const same=(a,b,c,d)=>a*d===b*c;
+const plural=(n,a,b,c)=>{const m=n%10,mm=n%100;return m===1&&mm!==11?a:m>=2&&m<=4&&(mm<10||mm>=20)?b:c;};
+const otr=n=>`${n} ${plural(n,'отрезок','отрезка','отрезков')}`;
+const PASS=85;
+const SECTIONS=[{id:'A',name:'Ведьмина лавка',short:'Лавка'},{id:'B',name:'Закрась клетки',short:'Клетки'},{id:'C',name:'Колба с зельем',short:'Колба'},{id:'D',name:'Мост через ров',short:'Мост'},{id:'E',name:'Тёмный мост',short:'Тёмный мост'}];
+
+/* ---------- generation ---------- */
+function generate(seed){
+  const R=rng(seed),ri=(a,b)=>a+Math.floor(R()*(b-a+1)),pick=a=>a[Math.floor(R()*a.length)];
+  const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+  const kNot=(lo,hi,bad)=>{let k;do k=ri(lo,hi);while(bad(k));return k;};
+  function opts(cn,cd,cands){ // cands:[[n,d,why]]
+    const out=[[cn,cd,null]];
+    for(const c of cands){if(out.length>=4)break;const[n,d]=c;if(n<=0||d<=0)continue;if(out.some(o=>same(o[0],o[1],n,d)))continue;out.push(c);}
+    let x=1;while(out.length<4){const n=cn+x,d=cd;if(!out.some(o=>same(o[0],o[1],n,d)))out.push([n,d,'gen']);x++;}
+    return shuffle(out).map(([n,d,why])=>({n,d,why}));
+  }
+  const T={A:[],B:[],C:[],D:[],E:[]};
+  // A — что такое дробь
+  {const n=pick([5,6,8]),k=kNot(2,n-1,k=>k*2===n);
+   T.A.push({type:'chip',fig:{t:'pie',n,sh:[...Array(k).keys()]},q:'Какая часть пирога закрашена?',ans:[k,n],
+    opts:opts(k,n,[[n-k,n,'unsh'],[k,n-k,'vs'],[n,k,'flip']]),name:`пирог ${k}/${n}`});}
+  {const [r,c]=pick([[2,4],[2,5],[3,3],[2,3]]),n=r*c,k=kNot(2,n-2,k=>k*2===n);const cells=shuffle([...Array(n).keys()]).slice(0,k);
+   T.A.push({type:'chip',fig:{t:'grid',r,c,sh:cells},q:'Какая часть прямоугольника закрашена?',tip:'Клетки разбросаны — это не страшно, считай их.',ans:[k,n],
+    opts:opts(k,n,[[k,n-k,'vs'],[n-k,n,'unsh'],[n,k,'flip']]),name:`прямоугольник ${k}/${n}`});}
+  {const n=ri(5,8),k=kNot(2,n-2,k=>k*2===n);const items=shuffle([...Array(n)].map((_,i)=>i<k?'p':'g'));
+   T.A.push({type:'chip',fig:{t:'set',items},q:'Какая часть всех фигурок — тыквы?',ans:[k,n],
+    opts:opts(k,n,[[k,n-k,'vsSet'],[n-k,n,'ghosts'],[n,k,'flip']]),name:`тыквы ${k}/${n}`});}
+  {const n=pick([7,9,10]),k=kNot(2,n-2,k=>k*2===n);
+   T.A.push({type:'chip',fig:{t:'strip',n,k},q:'Какая часть шоколадки закрашена?',ans:[k,n],
+    opts:opts(k,n,[[k,n-k,'vs'],[n,k,'flip'],[n-k,n,'unsh']]),name:`шоколадка ${k}/${n}`});}
+  {const n=pick([4,6,8].filter(x=>x!==T.A[0].ans[1])),k=kNot(1,n-1,k=>k*2===n);
+   T.A.push({type:'chip',fig:{t:'pie',n,sh:[...Array(k).keys()]},q:'Какая часть пирога <u>НЕ</u> закрашена?',ans:[n-k,n],
+    opts:opts(n-k,n,[[k,n,'shInstead'],[n-k,k,'vs2'],[n,n-k,'flip']]),name:`незакрашенная часть ${n-k}/${n}`});}
+  {const n=pick([6,8,10]),k=kNot(2,n-2,k=>k*2===n);
+   T.A.push({type:'chip',fig:{t:'eaten',n,k},q:'Ведьма съела кусочки (пунктир). Какую часть пирога она съела?',ans:[k,n],
+    opts:opts(k,n,[[n-k,n,'left'],[k,n-k,'vsEat'],[n,k,'flip']]),name:`съела ${k}/${n}`});}
+  // B — закрась 12 клеток
+  {const pool={2:[1],3:[1,2],4:[1,3],6:[1,5],12:[5,7]};const bs=shuffle([3,4,6]).concat(pick([2,12]));
+   bs.slice(0,3).forEach(b=>{const a=pick(pool[b]);const [r,c]=pick([[3,4],[2,6]]);T.B.push({type:'shade',r,c,a,b,name:`закрасить ${a}/${b} от 12`});});}
+  // C — прямая с колбой (рисунок)
+  {const d=pick([4,5]),n=ri(2,d-1);T.C.push({type:'place',L:{d,max:1,pic:true},targets:[[n,d]]});}
+  {const d=pick([6,8]),n=kNot(2,d-1,k=>k*2===d);T.C.push({type:'place',L:{d,max:1,pic:true},targets:[[n,d]]});}
+  {const d=pick([5,6,7]),k=ri(2,d-1);T.C.push({type:'read',L:{d,max:1,pic:true},k,letter:'A'});}
+  {const d=pick([3,4]),n=ri(d+1,2*d-1);T.C.push({type:'place',L:{d,max:2,pic:true},targets:[[n,d]]});}
+  {const d=pick([6,8]);const t=d===6?pick([[1,3],[2,3],[1,2]]):pick([[1,4],[3,4],[1,2]]);T.C.push({type:'place',L:{d,max:1,pic:true},targets:[t],eq:true});}
+  {const d=pick([4,5,6]),k=ri(d+1,2*d-1);T.C.push({type:'read',L:{d,max:2,pic:true},k,letter:'B'});}
+  // D — чистые прямые
+  T.D.push({type:'place',L:{d:6,max:2},targets:pick([[[1,3],[1,2],[7,6]],[[2,3],[5,6],[4,3]],[[1,2],[2,3],[3,2]]])});
+  T.D.push({type:'place',L:{d:8,max:1},targets:pick([[[1,4],[5,8],[3,4]],[[1,2],[3,8],[1,4]],[[3,4],[1,8],[1,2]]])});
+  T.D.push({type:'place',L:{d:12,max:1},targets:pick([[[1,3],[1,2]],[[1,4],[2,3]],[[5,6],[1,4]]])});
+  {const d=pick([7,8,9,10]),k=kNot(2,d-1,k=>k*2===d);T.D.push({type:'read',L:{d,max:1},k,letter:'K'});}
+  {const d=pick([3,4,5]),k=ri(d+1,2*d-1);T.D.push({type:'read',L:{d,max:2},k,letter:'M'});}
+  // E — тёмный мост (единица не подписана)
+  {const d=pick([4,5,6]);T.E.push({type:'place',L:{d,N:d+ri(2,3),dark:true,lab:[1,d]},targets:[[1,1]],find1:true});}
+  {const d=pick([6,8,9]),m=pick([2,3]),N=d+3,k=kNot(m+1,N,k=>k===d);T.E.push({type:'read',L:{d,N,dark:true,lab:[m,d]},k,letter:'C'});}
+  {const d=8,m=3,N=11,n=pick([5,6,7,9,10]);T.E.push({type:'place',L:{d,N,dark:true,lab:[m,d]},targets:[[n,d]]});}
+  {const d=pick([5,6,7]),N=d+3,k=ri(d+1,N);T.E.push({type:'read',L:{d,N,dark:true,lab:[1,d]},k,letter:'D'});}
+  {const d=pick([4,5]),m=2;T.E.push({type:'place',L:{d,N:d+3,dark:true,lab:[m,d]},targets:[[1,1]],find1:true});}
+  // read-task options
+  for(const s of 'CDE')T[s].forEach(t=>{if(t.type!=='read')return;const L=t.L,d=L.d,k=t.k,N=L.N||d*L.max;
+    const c=[[k+1,d,'ticks'],[k,d+1,'denTicks']];if(k>d)c.unshift([k-d,d,'fromOne']);if(N>d&&!L.dark)c.push([k,N,'whole']);
+    if(L.dark&&L.lab[0]>1)c.unshift([k*L.lab[0],d,'segLab']);c.push([d,k,'flip'],[k-1,d,'ticks2']);
+    t.ans=[k,d];t.opts=opts(k,d,c);});
+  // ids
+  const items=[];
+  for(const s of SECTIONS)T[s.id].forEach((t,i)=>{t.sec=s.id;t.i=i;
+    if(t.type==='place'){t.ids=t.targets.map((_,j)=>`${s.id}${i}_${j}`);t.ids.forEach((id,j)=>items.push({id,sec:s.id,t,j}));}
+    else{t.ids=[`${s.id}${i}`];items.push({id:t.ids[0],sec:s.id,t});}});
+  return {T,items};
+}
+
+/* ---------- state ---------- */
+const KEY='drobi-tower-v1';
+function fresh(){return{seed:(Date.now()*7919%2147483647)>>>0,attempt:1,sec:0,idx:[0,0,0,0,0],items:{},history:[],start:Date.now()};}
+let S;try{S=JSON.parse(localStorage.getItem(KEY))||fresh();}catch(e){S=fresh();}
+if(!S.idx)S=fresh();
+let G=generate(S.seed),lastFb=null,asIs=false;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function it(id){return S.items[id]||(S.items[id]={tries:0,done:false,ok:false,shown:false,bad:[]});}
+function wrong(id,val){const s=it(id);s.tries++;s.bad.push(val);if(s.tries>=3){s.done=true;s.shown=true;}save();return s;}
+function right(id){const s=it(id);s.done=true;s.ok=s.tries===0;save();return s;}
+const taskDone=t=>t.ids.every(id=>it(id).done);
+const secDone=sid=>G.T[sid].every(taskDone);
+
+/* ---------- figures (Ведьмина лавка) ---------- */
+const PUR='#8a5ad0',PURD='#4a1f63',EMPTY='#fff8e6';
+function pieSVG(n,shaded,eaten){const cx=110,cy=105,r=92;let s=`<svg viewBox="0 0 220 210" width="230">`;
+  s+=`<circle cx="${cx}" cy="${cy+5}" r="${r+4}" fill="rgba(92,58,18,.18)"/>`;
+  for(let i=0;i<n;i++){const a0=-Math.PI/2+i*2*Math.PI/n,a1=a0+2*Math.PI/n;
+    const p=`M${cx} ${cy} L${cx+r*Math.cos(a0)} ${cy+r*Math.sin(a0)} A${r} ${r} 0 0 1 ${cx+r*Math.cos(a1)} ${cy+r*Math.sin(a1)}Z`;
+    if(eaten&&eaten.includes(i))s+=`<path d="${p}" fill="none" stroke="#a07a48" stroke-width="2.5" stroke-dasharray="7 6"/>`;
+    else s+=`<path d="${p}" fill="${eaten?'#f0a43a':shaded.includes(i)?PUR:EMPTY}" stroke="${PURD}" stroke-width="3" stroke-linejoin="round"/>`;}
+  if(eaten){for(let i=0;i<n;i++){if(eaten.includes(i))continue;const a=-Math.PI/2+(i+.5)*2*Math.PI/n;s+=`<circle cx="${cx+r*.62*Math.cos(a)}" cy="${cy+r*.62*Math.sin(a)}" r="5" fill="#b85a10"/>`;}}
+  return s+'</svg>';}
+function gridSVG(r,c,sh,size=54,onCell){let s=`<svg viewBox="-4 -4 ${c*size+8} ${r*size+8}" width="${c*size+8}">`;
+  for(let i=0;i<r*c;i++){const x=(i%c)*size,y=Math.floor(i/c)*size;s+=`<rect class="${onCell?'cell':''}" data-i="${i}" x="${x}" y="${y}" width="${size}" height="${size}" fill="${sh.includes(i)?PUR:EMPTY}" stroke="${PURD}" stroke-width="3"/>`;
+    if(onCell&&sh.includes(i))s+=`<path d="M${x+size/2} ${y+size*.42} c-6 -10 -16 -8 -20 -3 c6 0 7 6 5 9 c4 -3 10 -2 15 3 c5 -5 11 -6 15 -3 c-2 -3 -1 -9 5 -9 c-4 -5 -14 -7 -20 3z" fill="#2b1446" pointer-events="none"/>`;}
+  return s+'</svg>';}
+function stripSVG(n,k){const w=58;let s=`<svg viewBox="-4 -4 ${n*w+8} 78" width="${Math.min(n*w+8,620)}">`;
+  for(let i=0;i<n;i++)s+=`<rect x="${i*w}" y="0" width="${w}" height="70" rx="4" fill="${i<k?'#7a4a2a':EMPTY}" stroke="${PURD}" stroke-width="3"/>${i<k?`<rect x="${i*w+8}" y="8" width="${w-16}" height="54" rx="4" fill="#8f5a34"/>`:''}`;
+  return s+'</svg>';}
+const PUMPKIN=(x,y,sc)=>`<g transform="translate(${x} ${y}) scale(${sc})"><path d="M0 -26 q4 -10 10 -12" stroke="#3c7a1a" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="-12" cy="0" rx="16" ry="24" fill="#ff8a1f" stroke="#8a3c00" stroke-width="3"/><ellipse cx="12" cy="0" rx="16" ry="24" fill="#ff8a1f" stroke="#8a3c00" stroke-width="3"/><ellipse cx="0" cy="0" rx="14" ry="25" fill="#ffa040" stroke="#8a3c00" stroke-width="3"/><path d="M-12 -4 l5 -7 l5 7z M2 -4 l5 -7 l5 7z" fill="#5a1d00"/><path d="M-12 8 q12 9 24 0" stroke="#5a1d00" stroke-width="3" fill="none"/></g>`;
+const GHOST=(x,y,sc)=>`<g transform="translate(${x} ${y}) scale(${sc})"><path d="M-22 26 V-4 a22 22 0 0 1 44 0 V26 l-7 -7 l-8 7 l-7 -7 l-7 7 l-8 -7z" fill="#fff" stroke="#6b5a80" stroke-width="3" stroke-linejoin="round"/><circle cx="-8" cy="-4" r="4" fill="#2b1446"/><circle cx="8" cy="-4" r="4" fill="#2b1446"/><ellipse cx="0" cy="8" rx="4" ry="5" fill="#2b1446"/></g>`;
+function setSVG(items){const w=78;let s=`<svg viewBox="0 0 ${items.length*w} 90" width="${items.length*w}">`;
+  items.forEach((t,i)=>s+=(t==='p'?PUMPKIN:GHOST)(i*w+w/2,48,1.1));return s+'</svg>';}
+function figSVG(f){if(f.t==='pie')return pieSVG(f.n,f.sh);if(f.t==='eaten')return pieSVG(f.n,[],[...Array(f.k).keys()]);if(f.t==='grid')return gridSVG(f.r,f.c,f.sh,62);if(f.t==='strip')return stripSVG(f.n,f.k);return setSVG(f.items);}
+
+/* ---------- number line ---------- */
+function sfr(x,y,n,d,fs,col){if(d===1)return `<text x="${x}" y="${y+fs*.35}" text-anchor="middle" font-size="${fs+2}" font-weight="900" fill="${col}">${n}</text>`;
+  const w=Math.max(String(n).length,String(d).length)*fs*.36+3;
+  return `<text x="${x}" y="${y-4}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="${col}">${n}</text><line x1="${x-w}" x2="${x+w}" y1="${y}" y2="${y}" stroke="${col}" stroke-width="2.2"/><text x="${x}" y="${y+fs-1}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="${col}">${d}</text>`;}
+function lineSVG(L,o){
+  const N=L.N||L.d*L.max,W=940,x0=40,x1=880,st=(x1-x0)/N,X=k=>x0+k*st,pic=!!L.pic;
+  const Y=pic?160:100,H=pic?222:162;
+  let s=`<svg class="nl" viewBox="0 0 ${W} ${H}" width="${W}" font-family="Rubik,sans-serif">`;
+  s+=`<defs><linearGradient id="pot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b6ff7a"/><stop offset="1" stop-color="#45b818"/></linearGradient></defs>`;
+  if(pic){const sy=36,sh=40;
+    s+=`<path d="M${X(0)} 26 V18 H${X(L.d)} V26" fill="none" stroke="#6b2f86" stroke-width="2.5"/><text x="${(X(0)+X(L.d))/2}" y="13" text-anchor="middle" font-size="15" font-weight="900" fill="#6b2f86">1 целая = ${L.d} ${plural(L.d,'часть','части','частей')}</text>`;
+    s+=`<rect x="${X(0)}" y="${sy}" width="${X(N)-X(0)}" height="${sh}" rx="8" fill="#e8f6ff" stroke="#3a6a8a" stroke-width="3"/>`;
+    s+=`<rect id="potf" x="${X(0)+1.5}" y="${sy+1.5}" width="${o.fill?X(o.fill)-X(0)-3:0}" height="${sh-3}" rx="6" fill="url(#pot)"/>`;
+    for(let k=1;k<N;k++)s+=`<line x1="${X(k)}" x2="${X(k)}" y1="${sy}" y2="${sy+sh}" stroke="#3a6a8a" stroke-width="${k%L.d===0?4:2}"/>`;
+    for(let k=0;k<=N;k++)s+=`<line x1="${X(k)}" x2="${X(k)}" y1="${sy+sh+3}" y2="${Y-6}" stroke="#9a86b0" stroke-width="1.5" stroke-dasharray="4 5"/>`;
+    s+=`<g id="bub" opacity="0"><rect x="0" y="${sy+6}" width="92" height="28" rx="12" fill="#2b1446"/><text x="46" y="${sy+25}" text-anchor="middle" font-size="15" font-weight="700" fill="#fff"></text></g>`;}
+  s+=`<line x1="${X(0)-18}" x2="${X(N)+40}" y1="${Y}" y2="${Y}" stroke="#2b1446" stroke-width="3.5"/><path d="M${X(N)+44} ${Y} l-14 -8 v16z" fill="#2b1446"/>`;
+  for(let k=0;k<=N;k++){const big=!L.dark&&k%L.d===0;s+=`<line x1="${X(k)}" x2="${X(k)}" y1="${Y-(big?15:10)}" y2="${Y+(big?15:10)}" stroke="#2b1446" stroke-width="${big?4:2.5}"/>`;}
+  const labs=[[0,0,1]];if(L.dark)labs.push([L.lab[0],L.lab[0],L.lab[1]]);else for(let u=1;u<=L.max;u++)labs.push([u*L.d,u,1]);
+  labs.forEach(([k,n,d])=>s+=sfr(X(k),Y+38,n,d,19,'#2b1446'));
+  (o.bad||[]).forEach(k=>s+=`<path d="M${X(k)-6} ${Y-26} l12 12 M${X(k)+6} ${Y-26} l-12 12" stroke="#c0262f" stroke-width="3"/>`);
+  if(o.point){const k=o.point.k;s+=`<circle cx="${X(k)}" cy="${Y}" r="9" fill="#ff8a1f" stroke="#2b1446" stroke-width="3"/><text x="${X(k)}" y="${Y-22}" text-anchor="middle" font-size="24" font-weight="900" fill="#c0262f">${o.point.letter}</text>`;}
+  (o.markers||[]).forEach(m=>{const x=X(m.k),col=m.shown?'#6b2f86':'#2f8f1c';
+    s+=`<line x1="${x}" x2="${x}" y1="${Y-24}" y2="${Y}" stroke="${col}" stroke-width="3"/>${PUMPKIN(x,Y-32,.42)}${sfr(x,Y-62,m.n,m.d,15,col)}`;});
+  s+=`<circle class="hov" cx="0" cy="${Y}" r="13" fill="rgba(255,138,31,.45)" stroke="#ff8a1f" stroke-width="2"/>`;
+  if(o.click)for(let k=0;k<=N;k++)s+=`<rect class="hit" data-k="${k}" x="${X(k)-st/2}" y="0" width="${st}" height="${H}"/>`;
+  s+='</svg>';
+  const box=h('div',{class:'fig',html:s});const svg=box.firstChild;
+  if(o.click){const hov=svg.querySelector('.hov'),potf=svg.querySelector('#potf'),bub=svg.querySelector('#bub');
+    svg.querySelectorAll('.hit').forEach(r=>{const k=+r.dataset.k;
+      r.addEventListener('mouseenter',()=>{hov.setAttribute('cx',X(k));hov.style.opacity=1;
+        if(potf&&o.hoverFill){potf.setAttribute('width',Math.max(0,X(k)-X(0)-3));bub.setAttribute('opacity',k?1:0);
+          const bx=Math.min(Math.max(X(k)-46,X(0)),X(N)-92);bub.setAttribute('transform',`translate(${bx} 0)`);bub.querySelector('text').textContent=`${k} ${plural(k,'часть','части','частей')}`;}});
+      r.addEventListener('mouseleave',()=>{hov.style.opacity=0;if(potf&&o.hoverFill){potf.setAttribute('width',o.fill?X(o.fill)-X(0)-3:0);bub.setAttribute('opacity',0);}});
+      r.addEventListener('click',()=>o.click(k,svg));});}
+  return box;
+}
+
+/* ---------- hints ---------- */
+function chipHint(t,o){const[n,d]=t.ans;const W={
+  unsh:`${fr(o.n,o.d)} — это <b>незакрашенная</b> часть. А спрашивают про закрашенную: посчитай закрашенные кусочки.`,
+  vs:`Знаменатель (внизу) — это <b>все</b> равные части фигуры, а не только незакрашенные. Посчитай все части: сколько их всего?`,
+  vsSet:`Внизу пишем, сколько <b>всего</b> фигурок (и тыквы, и привидения), а не только привидений.`,
+  ghosts:`${fr(o.n,o.d)} — это часть <b>привидений</b>. А спрашивают про тыквы.`,
+  flip:`Перевёрнуто! Сверху (числитель) — сколько частей <b>взяли</b>, снизу (знаменатель) — на сколько частей <b>разделили</b>. Числитель тут меньше знаменателя.`,
+  shInstead:`${fr(o.n,o.d)} — это <b>закрашенная</b> часть. А спрашивают, какая часть <b>НЕ</b> закрашена: посчитай белые кусочки.`,
+  vs2:`Знаменатель — это <b>все</b> куски пирога, а не только закрашенные.`,
+  left:`${fr(o.n,o.d)} — это то, что <b>осталось</b>. А спрашивают, сколько съела: посчитай пунктирные кусочки.`,
+  vsEat:`Внизу — на сколько кусков <b>разрезали весь</b> пирог (и съеденные, и оставшиеся).`,
+  gen:`Нет. Сначала посчитай, на сколько равных частей всё разделено (это знаменатель), потом — сколько частей нужно (числитель).`};
+  return W[o.why]||W.gen;}
+function readHint(t,o){const L=t.L,d=L.d;const W={
+  ticks:`Ты, похоже, считала <b>чёрточки</b> вместе с нулём. Считай <b>отрезки (шаги)</b> от нуля до точки ${t.letter}: ноль — это старт, его не считаем.`,
+  ticks2:`Посчитай ещё раз шаги от нуля до точки ${t.letter} — каждый шаг между соседними чёрточками.`,
+  denTicks:`Знаменатель — на сколько <b>отрезков</b> разделён путь от 0 до 1, а не сколько там чёрточек. Посчитай отрезки от 0 до 1.`,
+  whole:`Знаменатель — сколько частей в <b>одной единице</b> (от 0 до 1), а не на всей прямой.`,
+  fromOne:`Ты считала от единицы. Дробь всегда считаем <b>от нуля</b>: сколько маленьких шагов от 0 до ${t.letter}?`,
+  flip:`Перевёрнуто: внизу — на сколько частей разделена единица, сверху — сколько таких частей до точки.`,
+  segLab:`Один маленький отрезок — это не ${fr(L.lab?.[0]||1,d)}! От 0 до ${fr(L.lab?.[0]||1,d)} — ${otr(L.lab?.[0]||1)}, значит один отрезок = ${fr(1,d)}.`,
+  gen:`Нет. Узнай, сколько стоит один маленький отрезок, и посчитай шаги от нуля до ${t.letter}.`};
+  let s=W[o.why]||W.gen;
+  if(L.dark&&o.why!=='segLab')s+=` <i>Подсказка: смотри на подпись ${fr(L.lab[0],d)} — по ней узнаешь, сколько стоит один отрезок.</i>`;
+  return s;}
+function placeHint(t,j,k,tries){const L=t.L,[n,dd]=t.targets[j],d=L.d,kc=n*d/dd;
+  const sayN=tries>=1;
+  if(t.find1){const m=L.lab[0];
+    if(Math.abs(k-kc)===1)return `Близко! Считай <b>отрезки</b>, а не чёрточки. От нуля до единицы должно быть ${d} ${plural(d,'шаг','шага','шагов')} по ${fr(1,d)}.`;
+    return `Смотри на подпись ${fr(m,d)}: от 0 до неё ${otr(m)} — значит один отрезок = ${fr(1,d)}. Единица — это ${fr(d,d)}${sayN?`, то есть <b>${otr(d)}</b> от нуля`:'. Сколько это отрезков?'}`;}
+  let pre=k===0?`Это ноль — там ещё ничего не набралось. `:`Ты поставила точку ${fr(k,d)}${L.dark?'':` (от нуля ${otr(k)} по ${fr(1,d)})`}. `;
+  if(dd!==d&&k===n)return `Ты отсчитала ${otr(n)}. Но единица тут разделена на <b>${d}</b> частей, а не на ${dd}! Сначала найди ${fr(1,dd)}: ${d} : ${dd} = ${d/dd}${sayN?`. Значит ${fr(n,dd)} = ${fr(kc,d)} — это ${otr(kc)}.`:' — столько отрезков в одной ' + (dd===2?'половине':'части')+'.'}`;
+  if(Math.abs(k-kc)===1&&dd===d)return `Почти! Ты попала на соседнюю чёрточку. Считай <b>отрезки (шаги)</b>, а не чёрточки: ноль — старт, его не считаем.${sayN?` Нужно ${otr(kc)} от нуля.`:''}`;
+  if(n>dd&&k===(n-dd)*d/dd)return `${fr(n,dd)} <b>больше единицы</b> (${fr(dd,dd)} = 1). Дойди до 1 и пройди дальше ещё ${fr(n-dd,dd)}.`;
+  if(L.dark)return pre+`Смотри на подпись ${fr(L.lab[0],d)}: от 0 до неё ${otr(L.lab[0])}, значит один отрезок = ${fr(1,d)}. ${sayN?`${fr(n,dd)} — это ${otr(kc)} от нуля.`:''}`;
+  if(dd!==d)return pre+`А нужно ${fr(n,dd)}. Единица разделена на ${d} частей: ${fr(1,dd)} = ${fr(d/dd,d)}${sayN?`, значит ${fr(n,dd)} = ${fr(kc,d)}.`:'.'}`;
+  return pre+`А нужно ${fr(n,dd)} — от нуля ${sayN?`<b>${otr(n)}</b>`:`${n} ${plural(n,'шаг','шага','шагов')}`}.`;}
+function shadeHint(t,cnt,tries){const per=12/t.b,need=t.a*per;
+  if(cnt===t.a&&t.a!==need)return `Ты закрасила ${t.a} ${plural(t.a,'клетку','клетки','клеток')} — это ${fr(t.a,12)}. Сначала раздели 12 клеток на ${t.b} равных частей: 12 : ${t.b} = ${per}. Одна часть — ${per} ${plural(per,'клетка','клетки','клеток')}${t.a>1?`. А нужно ${t.a} ${plural(t.a,'такая часть','таких части','таких частей')}`:`, и ${fr(1,t.b)} — это как раз одна такая часть`}.`;
+  if(cnt===per&&t.a>1)return `Это только ${fr(1,t.b)} (одна часть = ${per} ${plural(per,'клетка','клетки','клеток')}). А нужно ${t.a} таких части.`;
+  return `Закрашено ${cnt}. Раздели 12 клеток на ${t.b} частей: в каждой по ${per}. ${tries>=1?`${fr(t.a,t.b)} — это ${t.a} · ${per} = <b>${need}</b> клеток.`:`Сколько клеток в ${t.a} таких частях?`}`;}
+
+/* ---------- render ---------- */
+const main=document.getElementById('main');
+function render(){if(S.sec!==5)asIs=false;renderSteps();renderTower();main.innerHTML='';
+  if(S.sec===5){ending();return;}
+  const sec=SECTIONS[S.sec],tasks=G.T[sec.id],ti=Math.min(S.idx[S.sec],tasks.length-1),t=tasks[ti];
+  const card=h('section',{class:'card'});
+  const dots=h('div',{class:'dots'},tasks.map((x,i)=>{const sts=x.ids.map(it);const done=sts.every(s=>s.done);
+    const cls=['dot',i===ti?'cur':'',done?(sts.every(s=>s.ok)?'ok':sts.some(s=>s.shown)?'shown':'half'):''].join(' ');
+    return h('button',{class:cls,'aria-label':`Задание ${i+1}`,onclick:()=>{S.idx[S.sec]=i;lastFb=null;save();render();}},String(i+1));}));
+  card.append(h('div',{class:'chead'},h('h2',{},`${S.sec+1}. ${sec.name}`),dots));
+  const body=h('div',{style:'display:flex;flex-direction:column;flex:1;min-height:0'});card.append(body);
+  ({chip:taskChip,read:taskRead,shade:taskShade,place:taskPlace})[t.type](t,body);
+  const last=S.sec===4&&ti===tasks.length-1;
+  const prev=h('button',{class:'btn ghost',disabled:S.sec===0&&ti===0,onclick:()=>move(-1)},'← Назад');
+  const next=h('button',{class:'btn '+(taskDone(t)?'green pulse':'ghost'),onclick:()=>move(1)},last?'К итогу →':'Дальше →');
+  card.append(h('div',{class:'navrow'},prev,next));
+  main.append(card);
+}
+function move(dir){lastFb=null;const n=G.T[SECTIONS[S.sec].id].length;let i=S.idx[S.sec]+dir;
+  if(i>=n){S.sec++;if(S.sec<5)S.idx[S.sec]=0;}else if(i<0){if(S.sec>0){S.sec--;S.idx[S.sec]=G.T[SECTIONS[S.sec].id].length-1;}}else S.idx[S.sec]=i;
+  save();render();}
+function renderSteps(){const el=document.getElementById('steps');el.innerHTML='';
+  SECTIONS.forEach((s,i)=>el.append(h('button',{class:(S.sec===i?'on ':'')+(secDone(s.id)?'done':''),onclick:()=>{S.sec=i;lastFb=null;save();render();}},s.short)));
+  el.append(h('button',{class:S.sec===5?'on':'',onclick:()=>{S.sec=5;save();render();}},'Итог · отправить ✉'));}
+function fbBox(id,okMsg){const z=h('div',{class:'fbz',role:'status'});const s=it(id);
+  if(lastFb&&lastFb.id===id&&!s.done)z.append(h('div',{class:'fb bad',html:lastFb.html}));
+  else if(s.done)z.append(h('div',{class:'fb '+(s.shown?'show':'ok'),html:s.msg||okMsg||''}));
+  return z;}
+function shakeEl(el){if(!el)return;el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}
+function chipsFor(t,id,hintFn,okFn,showFn){const s=it(id);
+  return h('div',{class:'chips'},t.opts.map(o=>{const isC=same(o.n,o.d,...t.ans),isBad=s.bad.some(b=>b[0]===o.n&&b[1]===o.d);
+    const b=h('button',{class:'chip'+(isBad?' no':'')+(s.done&&isC?' yes':''),disabled:s.done||isBad,html:frx(o.n,o.d)});
+    b.onclick=()=>{if(isC){right(id);it(id).msg=okFn();lastFb=null;}else{const st=wrong(id,[o.n,o.d]);lastFb={id,html:(st.tries===1?'Неверно. ':'Снова неверно. ')+hintFn(o)};if(st.done)st.msg=showFn();}save();render();};
+    return b;}));}
+function taskChip(t,body){const id=t.ids[0],[n,d]=t.ans;
+  body.append(h('div',{class:'q',html:t.q+(t.tip?`<span class="tip">${t.tip}</span>`:'')}),h('div',{class:'fig',html:figSVG(t.fig)}),
+    chipsFor(t,id,o=>chipHint(t,o),()=>`<b>Верно!</b> Всего ${d} равных частей — знаменатель ${d}; нужных частей ${n} — числитель ${n}. Ответ ${fr(n,d)}.`,
+      ()=>`Правильный ответ ${fr(n,d)}: всего равных частей ${d} (внизу), нужных ${n} (сверху).`),fbBox(id));}
+function taskRead(t,body){const id=t.ids[0],L=t.L,[k,d]=t.ans,s=it(id);
+  const q=L.dark?`Какое число соответствует точке ${t.letter}?<span class="tip">Единица не подписана! Узнай по подписи, сколько стоит один маленький отрезок.</span>`
+    :L.pic?`Какая дробь соответствует точке ${t.letter}?<span class="tip">Зелье налито ровно до точки ${t.letter}. Посчитай, сколько частей колбы заполнено, и на сколько частей разделена 1 целая.</span>`
+    :`Какая дробь соответствует точке ${t.letter}?<span class="tip">Считай отрезки (шаги) от нуля, а не чёрточки.</span>`;
+  body.append(h('div',{class:'q',html:q}),lineSVG(L,{point:{k,letter:t.letter},fill:L.pic?k:0}),
+    chipsFor(t,id,o=>readHint(t,o),()=>`<b>Верно!</b> От 0 до ${t.letter} — ${otr(k)} по ${fr(1,d)}, значит ${t.letter} = ${fr(k,d)}${k>d?` (это больше 1)`:''}.`,
+      ()=>`Ответ ${fr(k,d)}: один отрезок = ${fr(1,d)}, от 0 до ${t.letter} — ${otr(k)}.`),fbBox(id));}
+function taskShade(t,body){const id=t.ids[0],s=it(id);if(!s.cells)s.cells=[];const per=12/t.b,need=t.a*per;
+  body.append(h('div',{class:'q',html:`Закрась ${fr(t.a,t.b)} прямоугольника.<span class="tip">Нажимай на клетки, чтобы закрасить или стереть. Потом нажми «Проверить».</span>`}));
+  const fig=h('div',{class:'fig',html:gridSVG(t.r,t.c,s.cells,t.c===6?66:72,true)});
+  if(!s.done)fig.querySelectorAll('.cell').forEach(c=>c.addEventListener('click',()=>{const i=+c.dataset.i;const a=s.cells;const p=a.indexOf(i);if(p<0)a.push(i);else a.splice(p,1);lastFb=null;save();render();}));
+  const cnt=s.cells.length;
+  const chk=h('button',{class:'btn',disabled:s.done||!cnt,onclick:()=>{
+    if(cnt===need){right(id);s.msg=`<b>Верно!</b> 12 : ${t.b} = ${per} — это ${fr(1,t.b)}. ${t.a>1?`${t.a} · ${per} = ${need} клеток — `:''}это ${fr(t.a,t.b)}.`;lastFb=null;}
+    else{const tries=s.tries;const st=wrong(id,cnt);lastFb={id,html:(st.tries===1?'Неверно. ':'Снова неверно. ')+shadeHint(t,cnt,tries)};
+      if(st.done){s.cells=[...Array(need).keys()];st.msg=`Смотри: 12 клеток : ${t.b} = ${per} клеток в одной части. ${fr(t.a,t.b)} — это ${t.a} · ${per} = <b>${need}</b> клеток (закрасила за тебя).`;}}
+    save();render();}},'Проверить');
+  body.append(fig,h('div',{class:'chips',style:'align-items:center'},h('span',{style:'font-weight:700;color:var(--ink2)'},`Закрашено клеток: ${cnt} из 12`),chk),fbBox(id));}
+function taskPlace(t,body){const L=t.L;const j=t.ids.findIndex(id=>!it(id).done);const cur=j<0?t.ids.length-1:j;const id=t.ids[cur];
+  const [n,dd]=t.targets[cur];const many=t.targets.length>1;
+  const what=t.find1?'число <b>1</b>':fr(n,dd);
+  let q=`Отметь на прямой ${what}.`;
+  if(many)q=`Отметь на прямой: ${t.targets.map((x,i)=>i===cur&&j>=0?`<u>${fr(...x)}</u>`:fr(...x)).join(', ')}. ${j>=0?`Сейчас — ${what}.`:''}`;
+  let tip=L.dark?`Единица не подписана! По подписи ${fr(...L.lab)} узнай, сколько стоит один маленький отрезок.`
+    :L.pic?`Наведи на чёрточку — колба покажет, сколько частей набралось.${t.eq?' Подумай, сколько маленьких частей в одной нужной.':''}`
+    :`Нажми на нужную чёрточку. Считай отрезки (шаги) от нуля.`;
+  body.append(h('div',{class:'q',html:q+`<span class="tip">${tip}</span>`}));
+  const markers=[];t.ids.forEach((x,i)=>{const s=it(x);if(s.done){const[a,b]=t.targets[i];markers.push({k:a*L.d/b,n:a,d:b,shown:s.shown});}});
+  const s=it(id);const lastMarker=markers.length?markers[markers.length-1].k:0;
+  body.append(lineSVG(L,{markers,bad:s.done?[]:s.bad,fill:L.pic&&markers.length?lastMarker:0,hoverFill:L.pic,click:j<0?null:(k,svg)=>{
+    const kc=n*L.d/dd;
+    if(k===kc){right(id);it(id).msg=`<b>Верно!</b> ${t.find1?`Единица = ${fr(L.d,L.d)} — ${otr(L.d)} по ${fr(1,L.d)}.`:`${fr(n,dd)}${dd!==L.d?` = ${fr(kc,L.d)}`:''} — от нуля ${otr(kc)} по ${fr(1,L.d)}.`}`;lastFb=null;}
+    else{const tries=s.tries;const st=wrong(id,k);lastFb={id,html:(st.tries===1?'Неверно. ':'Снова неверно. ')+placeHint(t,cur,k,tries)};
+      if(st.done)st.msg=`Правильная точка отмечена фиолетовым: ${t.find1?`1 = ${fr(L.d,L.d)} — это ${otr(L.d)} по ${fr(1,L.d)}`:`${fr(n,dd)}${dd!==L.d?` = ${fr(kc,L.d)}`:''} — ${otr(kc)} от нуля`}.`;
+      shakeEl(svg);}
+    save();if(st_ok(id))render();else render();}}));
+  // feedback: for multi show last done target's message if current not attempted
+  let fid=id;if(many&&!lastFb){const doneIds=t.ids.filter(x=>it(x).done);if(!s.tries&&doneIds.length)fid=doneIds[doneIds.length-1];}
+  body.append(fbBox(fid));}
+function st_ok(){return true;}
+
+/* ---------- tower ---------- */
+function renderTower(){
+  const W=260,H=620,x0=60,x1=200,fh=86,top=150;
+  const bat='M50 30 C45 20 35 15 20 18 C25 22 26 28 22 32 C15 28 6 30 0 36 C10 36 18 42 22 48 C30 42 40 42 46 46 L50 40 L54 46 C60 42 70 42 78 48 C82 42 90 36 100 36 C94 30 85 28 78 32 C74 28 75 22 80 18 C65 15 55 20 50 30Z';
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Башня: этажи загораются, когда разделы решены" font-family="Rubik,sans-serif"><defs>
+  <pattern id="brick" width="28" height="16" patternUnits="userSpaceOnUse"><rect width="28" height="16" fill="#4a4458"/><path d="M0 0H28M0 8H28M14 0V8M0 8V16M28 8V16" stroke="#2c2836" stroke-width="2"/></pattern>
+  <radialGradient id="glw"><stop offset="0" stop-color="#ffd23b" stop-opacity=".8"/><stop offset="1" stop-color="#ffd23b" stop-opacity="0"/></radialGradient></defs>`;
+  s+=`<path d="${bat}" transform="translate(196 70) scale(.5)" fill="#0d0617"/><path d="${bat}" transform="translate(6 196) scale(.38)" fill="#0d0617"/>`;
+  s+=`<path d="M${x0-18} ${top} L130 18 L${x1+18} ${top}Z" fill="#5b2a86" stroke="#2a1040" stroke-width="5" stroke-linejoin="round"/><path d="M130 18 V-2" stroke="#2a1040" stroke-width="4"/><path d="M130 -2 L156 6 L130 14Z" fill="#ff8a1f"/>`;
+  const all=SECTIONS.every(x=>secDone(x.id));
+  s+=`<path d="M114 128 V104 Q130 86 146 104 V128Z" fill="${all?'#ffd23b':'#1a0f24'}" stroke="#2a1040" stroke-width="4"/>`;
+  if(all)s+=`<path d="M118 128 L118 112 L123 104 L127 112 L133 112 L137 104 L142 112 L142 128Z" fill="#1b1424"/><circle cx="125" cy="117" r="2.4" fill="#ffd23b"/><circle cx="135" cy="117" r="2.4" fill="#ffd23b"/>`;
+  s+=`<rect x="${x0}" y="${top}" width="${x1-x0}" height="${fh*5+10}" fill="url(#brick)" stroke="#1c1824" stroke-width="5"/>`;
+  SECTIONS.forEach((sec,f)=>{const y=top+(4-f)*fh;const ids=G.items.filter(x=>x.sec===sec.id).map(x=>x.id);const p=ids.filter(i=>it(i).done).length/ids.length,done=p===1;
+    if(f<4)s+=`<rect x="${x0-8}" y="${y+fh-4}" width="${x1-x0+16}" height="10" rx="3" fill="#2c2836"/>`;
+    if(done)s+=`<circle cx="130" cy="${y+40}" r="46" fill="url(#glw)"/>`;
+    const wy0=y+10,wy1=y+66,fillH=(wy1-wy0)*p;
+    s+=`<g class="twf" data-f="${f}"><rect x="${x0}" y="${y}" width="${x1-x0}" height="${fh}" fill="transparent"/>`;
+    s+=`<clipPath id="wc${f}"><path d="M108 ${wy1} V${y+30} Q130 ${y+6} 152 ${y+30} V${wy1}Z"/></clipPath>`;
+    s+=`<path d="M108 ${wy1} V${y+30} Q130 ${y+6} 152 ${y+30} V${wy1}Z" fill="#1a0f24"/>`;
+    s+=`<rect clip-path="url(#wc${f})" x="100" y="${wy1-fillH}" width="60" height="${fillH}" fill="${done?'#ffd23b':'#ff8a1f'}"/>`;
+    s+=`<path d="M108 ${wy1} V${y+30} Q130 ${y+6} 152 ${y+30} V${wy1}Z" fill="none" stroke="${f===S.sec?'#9dff5a':'#1c1824'}" stroke-width="${f===S.sec?6:4}"/>`;
+    s+=`<path d="M130 ${y+18} V${wy1} M108 ${y+44} H152" stroke="#1c1824" stroke-width="3"/>`;
+    s+=`<rect x="${x0+6}" y="${y+28}" width="26" height="24" rx="6" fill="#170b24"/><text x="${x0+19}" y="${y+46}" text-anchor="middle" font-weight="900" font-size="17" fill="${done?'#9dff5a':'#e9dcff'}">${f+1}</text></g>`;});
+  const yb=top+fh*5+10;
+  s+=`<path d="M0 ${yb+8} Q130 ${yb-16} 260 ${yb+8} V${H} H0Z" fill="#0d0617"/><path d="M114 ${yb} V${yb-22} Q130 ${yb-38} 146 ${yb-22} V${yb}Z" fill="#2a1608" stroke="#1c1824" stroke-width="3"/>`;
+  s+=PUMPKIN(34,yb+30,.55)+PUMPKIN(226,yb+34,.45)+'</svg>';
+  const el=document.getElementById('tower');el.innerHTML=s;
+  el.querySelectorAll('.twf').forEach(g=>g.addEventListener('click',()=>{S.sec=+g.dataset.f;lastFb=null;save();render();}));
+}
+
+/* ---------- ending ---------- */
+function score(){const per={};let got=0,max=0;
+  for(const sec of SECTIONS){const ids=G.items.filter(x=>x.sec===sec.id);const ok=ids.filter(x=>it(x.id).ok).length;per[sec.id]={ok,max:ids.length};got+=ok;max+=ids.length;}
+  return{per,got,max,pct:Math.round(got/max*100)};}
+function itemName(x){const t=x.t,L=t.L;
+  if(t.type==='chip'||t.type==='shade')return t.name;
+  if(t.type==='read')return `какая дробь в точке ${t.letter} (ответ ${t.ans[0]}/${t.ans[1]})${L.dark?', единица не подписана':''}`;
+  const[n,d]=t.targets[x.j];return (t.find1?'найти 1 на прямой':`отметить ${n}/${d}`)+(L.pic?' (с колбой)':L.dark?` (подписано только ${L.lab[0]}/${L.lab[1]})`:` (прямая на ${L.d} частей)`);}
+function mistakes(){return G.items.filter(x=>it(x.id).tries).map(x=>{const s=it(x.id);return `${SECTIONS.find(q=>q.id===x.sec).short}: ${itemName(x)} — ошибок ${s.tries}${s.shown?' (показан ответ)':''}`;});}
+function ending(){
+  const left=SECTIONS.filter(s=>!secDone(s.id));
+  if(left.length&&!asIs){main.append(h('section',{class:'card'},h('div',{class:'chead'},h('h2',{},'Ещё не всё')),h('p',{class:'q'},'Не закончены разделы — можно доделать:'),
+    h('div',{class:'todo'},left.map(s=>h('button',{class:'btn ghost',onclick:()=>{S.sec=SECTIONS.indexOf(s);const tasks=G.T[s.id];S.idx[S.sec]=Math.max(0,tasks.findIndex(t=>!taskDone(t)));save();render();}},s.name))),
+    h('p',{class:'q',style:'margin-top:22px'},'Или отправь учителю то, что уже успела:'),
+    h('div',{class:'todo'},h('button',{class:'btn green',onclick:()=>{asIs=true;render();}},'Отправить как есть →'))));return;}
+  const sc=score(),unfinished=left.length>0,ok=!unfinished&&sc.pct>=PASS;
+  const undone=G.items.filter(x=>!it(x.id).done).length;
+  if(!unfinished&&!S.history.find(x=>x.attempt===S.attempt)){S.history.push({attempt:S.attempt,pct:sc.pct,got:sc.got,max:sc.max,mins:Math.max(1,Math.round((Date.now()-S.start)/60000)),at:Date.now()});save();}
+  const rec=S.history.find(x=>x.attempt===S.attempt)||{mins:Math.max(1,Math.round((Date.now()-S.start)/60000)),at:Date.now()},d=new Date(rec.at);
+  const date=`${d.toLocaleDateString('ru-RU')}, ${d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}`;
+  const ms=mistakes();
+  const weak=SECTIONS.map(s=>({s,p:sc.per[s.id].ok/sc.per[s.id].max})).sort((a,b)=>a.p-b.p)[0];
+  const wrap=h('div',{style:'display:flex;flex-direction:column;min-height:0'});
+  wrap.append(h('p',{class:'snap'},'Сфотографируй эту карточку или нажми «Скопировать» и отправь учителю'));
+  const card=h('section',{class:'card cert'});
+  card.append(h('div',{class:'cert-top'},h('div',{class:'cert-t'},'Башня дробей'),h('div',{class:'cert-d'},`Домашнее задание · ${date}`)));
+  card.append(h('div',{class:'cert-head'},h('div',{class:'ring '+(ok?'ok':'bad'),style:`--p:${sc.pct}`},h('div',{class:'ring-in'},h('b',{},sc.pct+'%'),h('span',{},'с первой попытки'))),
+    h('div',{class:'cert-side'},h('div',{class:'verdict '+(ok?'ok':'bad')},unfinished?'Не доделано':ok?'Зачёт ✓':'Нужно повторить'),unfinished?h('div',{class:'meta',style:'color:#7a3a00'},`Не решено заданий: ${undone} (разделы: ${left.map(x=>x.short).join(', ')})`):null,h('div',{class:'meta'},`Верно с первого раза: ${sc.got} из ${sc.max}`),
+      h('div',{class:'meta'},`Время: ${rec.mins} мин · попытка ${S.attempt}`),ok||unfinished?null:h('div',{class:'meta',style:'color:#7a3a00'},`Повтори раздел «${weak.s.name}» и пройди ещё раз — числа будут новые.`))));
+  const rows=h('div',{class:'bars2'});SECTIONS.forEach(s=>{const p=sc.per[s.id];rows.append(h('div',{class:'b2'},h('span',{},s.name),h('span',{class:'b2bar'},h('span',{style:`width:${Math.round(p.ok/p.max*100)}%`})),h('span',{},`${p.ok}/${p.max}`)));});
+  card.append(rows,h('div',{class:'mis'},h('div',{class:'mis-t'},ms.length?'Где были ошибки':unfinished?'В решённых заданиях ошибок не было':'Ошибок не было!'),ms.length?h('ul',{},ms.map(m=>h('li',{},m))):null));
+  if(S.history.length>1)card.append(h('div',{class:'meta',style:'margin-top:6px'},`Прошлые попытки: ${S.history.filter(x=>x.attempt!==S.attempt).map(x=>x.pct+'%').join(', ')}`));
+  wrap.append(card);
+  const rep=[`Башня дробей — домашнее задание`,date,`Результат: ${sc.pct}% (${sc.got} из ${sc.max}) — ${unfinished?`НЕ ДОДЕЛАНО, не решено заданий: ${undone}`:ok?'зачёт':'нужно повторить'}`,...SECTIONS.map(s=>`• ${s.name}: ${sc.per[s.id].ok}/${sc.per[s.id].max}`),
+    ms.length?`Ошибки:\n${ms.map(m=>'  – '+m).join('\n')}`:'Ошибок не было',`Время: ${rec.mins} мин, попытка ${S.attempt}`].join('\n');
+  const cb=h('button',{class:'btn green',onclick:async()=>{try{await navigator.clipboard.writeText(rep);cb.textContent='Скопировано! Вставь в чат учителю';}catch(e){const ta=h('textarea',{class:'report',readonly:true});ta.value=rep;cb.parentNode.after(ta);ta.select();cb.textContent='Выдели текст ниже и скопируй';}}},'Скопировать результат');
+  const sh=navigator.share?h('button',{class:'btn',onclick:()=>navigator.share({title:'Башня дробей',text:rep}).catch(()=>{})},'Отправить…'):null;
+  wrap.append(h('div',{class:'endnav'},cb,sh,unfinished?h('button',{class:'btn ghost',onclick:()=>{asIs=false;render();}},'← Доделать'):h('button',{class:'btn '+(ok?'ghost':''),onclick:restart},'Пройти ещё раз с новыми числами')));
+  main.append(wrap);if(ok)celebrate();}
+function restart(){const keep={history:S.history,attempt:S.attempt+1};S=Object.assign(fresh(),keep);G=generate(S.seed);lastFb=null;save();render();}
+function celebrate(){if(matchMedia('(prefers-reduced-motion: reduce)').matches||typeof confetti!=='function')return;
+  const colors=['#ff8a1f','#9dff5a','#c79bff','#ffd23b','#ffffff'];const end=Date.now()+2500;
+  (function f(){confetti({particleCount:6,angle:60,spread:60,origin:{x:0,y:.7},colors});confetti({particleCount:6,angle:120,spread:60,origin:{x:1,y:.7},colors});if(Date.now()<end)requestAnimationFrame(f);})();
+  setTimeout(()=>confetti({particleCount:180,spread:110,origin:{y:.45},colors}),300);}
+render();
+</script>
+</html>
