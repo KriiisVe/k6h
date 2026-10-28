@@ -29,6 +29,7 @@ button{font-family:var(--body);cursor:pointer}
 .steps button{border:2px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:5px 12px;font-weight:700;font-size:14px}
 .steps button.on{border-color:var(--pumpkin);color:#fff;background:#4a2560}
 .steps button.done::after{content:" ✓";color:var(--slime)}
+.mtower{display:none}
 .tower{min-height:0;display:flex;align-items:flex-end;justify-content:center}
 .tower svg{height:100%;max-height:600px;width:auto;max-width:100%}
 .twf{cursor:pointer}
@@ -100,10 +101,10 @@ button{font-family:var(--body);cursor:pointer}
 .endnav{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap}
 .report{width:100%;height:90px;margin-top:6px}
 .todo{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-@media (max-width:860px){.cert-head{flex-wrap:wrap}.app{grid-template-columns:1fr;height:auto}.tower{display:none}.logo{font-size:26px}.q{font-size:18px}}
+@media (max-width:860px){.mtower{display:flex;align-items:center;gap:8px;margin-left:auto;order:2}.mtower svg{height:92px;width:auto}.mt-t{font-size:13px;color:var(--muted);line-height:1.25}.mt-t b{color:var(--pumpkin2)}.steps{order:3;width:100%}.top{gap:6px 14px}.cert-head{flex-wrap:wrap}.app{grid-template-columns:1fr;height:auto}.tower{display:none}.logo{font-size:26px}.q{font-size:18px}}
 </style>
 <div class="app">
-  <div class="top"><div class="logo">Башня дробей</div><nav class="steps" id="steps"></nav></div>
+  <div class="top"><div class="logo">Башня дробей</div><div class="mtower" id="mtower"></div><nav class="steps" id="steps"></nav></div>
   <div class="tower" id="tower"></div>
   <main class="main" id="main"></main>
 </div>
@@ -192,7 +193,7 @@ const KEY='drobi-tower-v1';
 function fresh(){return{seed:(Date.now()*7919%2147483647)>>>0,attempt:1,sec:0,idx:[0,0,0,0,0],items:{},history:[],start:Date.now()};}
 let S;try{S=JSON.parse(localStorage.getItem(KEY))||fresh();}catch(e){S=fresh();}
 if(!S.idx)S=fresh();
-let G=generate(S.seed),lastFb=null,asIs=false;
+let G=generate(S.seed),lastFb=null,asIs=false,sel=null,shakeNext=false;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 function it(id){return S.items[id]||(S.items[id]={tries:0,done:false,ok:false,shown:false,bad:[]});}
 function wrong(id,val){const s=it(id);s.tries++;s.bad.push(val);if(s.tries>=3){s.done=true;s.shown=true;}save();return s;}
@@ -228,7 +229,7 @@ function sfr(x,y,n,d,fs,col){if(d===1)return `<text x="${x}" y="${y+fs*.35}" tex
   const w=Math.max(String(n).length,String(d).length)*fs*.36+3;
   return `<text x="${x}" y="${y-4}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="${col}">${n}</text><line x1="${x-w}" x2="${x+w}" y1="${y}" y2="${y}" stroke="${col}" stroke-width="2.2"/><text x="${x}" y="${y+fs-1}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="${col}">${d}</text>`;}
 function lineSVG(L,o){
-  const N=L.N||L.d*L.max,W=940,x0=40,x1=880,st=(x1-x0)/N,X=k=>x0+k*st,pic=!!L.pic;
+  const N=L.N||L.d*L.max,W=innerWidth<640?480:940,x0=W<600?28:40,x1=W-(W<600?44:60),st=(x1-x0)/N,X=k=>x0+k*st,pic=!!L.pic;
   const Y=pic?160:100,H=pic?222:162;
   let s=`<svg class="nl" viewBox="0 0 ${W} ${H}" width="${W}" font-family="Rubik,sans-serif">`;
   s+=`<defs><linearGradient id="pot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b6ff7a"/><stop offset="1" stop-color="#45b818"/></linearGradient></defs>`;
@@ -247,16 +248,19 @@ function lineSVG(L,o){
   if(o.point){const k=o.point.k;s+=`<circle cx="${X(k)}" cy="${Y}" r="9" fill="#ff8a1f" stroke="#2b1446" stroke-width="3"/><text x="${X(k)}" y="${Y-22}" text-anchor="middle" font-size="24" font-weight="900" fill="#c0262f">${o.point.letter}</text>`;}
   (o.markers||[]).forEach(m=>{const x=X(m.k),col=m.shown?'#6b2f86':'#2f8f1c';
     s+=`<line x1="${x}" x2="${x}" y1="${Y-24}" y2="${Y}" stroke="${col}" stroke-width="3"/>${PUMPKIN(x,Y-32,.42)}${sfr(x,Y-62,m.n,m.d,15,col)}`;});
+  if(o.sel!=null){const x=X(o.sel);s+=`<line x1="${x}" x2="${x}" y1="${Y-24}" y2="${Y}" stroke="#ff8a1f" stroke-width="3" stroke-dasharray="4 3"/>${PUMPKIN(x,Y-32,.42)}<text x="${x}" y="${Y-52}" text-anchor="middle" font-size="20" font-weight="900" fill="#c05a00">?</text>`;}
   s+=`<circle class="hov" cx="0" cy="${Y}" r="13" fill="rgba(255,138,31,.45)" stroke="#ff8a1f" stroke-width="2"/>`;
   if(o.click)for(let k=0;k<=N;k++)s+=`<rect class="hit" data-k="${k}" x="${X(k)-st/2}" y="0" width="${st}" height="${H}"/>`;
   s+='</svg>';
   const box=h('div',{class:'fig',html:s});const svg=box.firstChild;
-  if(o.click){const hov=svg.querySelector('.hov'),potf=svg.querySelector('#potf'),bub=svg.querySelector('#bub');
+  const potf=svg.querySelector('#potf'),bub=svg.querySelector('#bub');
+  const showFill=k=>{if(!potf)return;potf.setAttribute('width',Math.max(0,X(k)-X(0)-3));bub.setAttribute('opacity',k?1:0);
+    const bx=Math.min(Math.max(X(k)-46,X(0)),X(N)-92);bub.setAttribute('transform',`translate(${bx} 0)`);bub.querySelector('text').textContent=`${k} ${plural(k,'часть','части','частей')}`;};
+  if(o.hoverFill&&o.sel!=null)showFill(o.sel);
+  if(o.click){const hov=svg.querySelector('.hov');
     svg.querySelectorAll('.hit').forEach(r=>{const k=+r.dataset.k;
-      r.addEventListener('mouseenter',()=>{hov.setAttribute('cx',X(k));hov.style.opacity=1;
-        if(potf&&o.hoverFill){potf.setAttribute('width',Math.max(0,X(k)-X(0)-3));bub.setAttribute('opacity',k?1:0);
-          const bx=Math.min(Math.max(X(k)-46,X(0)),X(N)-92);bub.setAttribute('transform',`translate(${bx} 0)`);bub.querySelector('text').textContent=`${k} ${plural(k,'часть','части','частей')}`;}});
-      r.addEventListener('mouseleave',()=>{hov.style.opacity=0;if(potf&&o.hoverFill){potf.setAttribute('width',o.fill?X(o.fill)-X(0)-3:0);bub.setAttribute('opacity',0);}});
+      r.addEventListener('mouseenter',()=>{hov.setAttribute('cx',X(k));hov.style.opacity=1;if(o.hoverFill)showFill(k);});
+      r.addEventListener('mouseleave',()=>{hov.style.opacity=0;if(o.hoverFill){if(o.sel!=null)showFill(o.sel);else{potf.setAttribute('width',o.fill?X(o.fill)-X(0)-3:0);bub.setAttribute('opacity',0);}}});
       r.addEventListener('click',()=>o.click(k,svg));});}
   return box;
 }
@@ -365,18 +369,23 @@ function taskPlace(t,body){const L=t.L;const j=t.ids.findIndex(id=>!it(id).done)
   let q=`Отметь на прямой ${what}.`;
   if(many)q=`Отметь на прямой: ${t.targets.map((x,i)=>i===cur&&j>=0?`<u>${fr(...x)}</u>`:fr(...x)).join(', ')}. ${j>=0?`Сейчас — ${what}.`:''}`;
   let tip=L.dark?`Единица не подписана! По подписи ${fr(...L.lab)} узнай, сколько стоит один маленький отрезок.`
-    :L.pic?`Наведи на чёрточку — колба покажет, сколько частей набралось.${t.eq?' Подумай, сколько маленьких частей в одной нужной.':''}`
-    :`Нажми на нужную чёрточку. Считай отрезки (шаги) от нуля.`;
+    :L.pic?`Нажми на чёрточку — колба наполнится и покажет, сколько частей набралось. Потом «Проверить».${t.eq?' Подумай, сколько маленьких частей в одной нужной.':''}`
+    :`Нажми на нужную чёрточку, потом «Проверить». Считай отрезки (шаги) от нуля.`;
   body.append(h('div',{class:'q',html:q+`<span class="tip">${tip}</span>`}));
   const markers=[];t.ids.forEach((x,i)=>{const s=it(x);if(s.done){const[a,b]=t.targets[i];markers.push({k:a*L.d/b,n:a,d:b,shown:s.shown});}});
   const s=it(id);const lastMarker=markers.length?markers[markers.length-1].k:0;
-  body.append(lineSVG(L,{markers,bad:s.done?[]:s.bad,fill:L.pic&&markers.length?lastMarker:0,hoverFill:L.pic,click:j<0?null:(k,svg)=>{
+  const selK=sel&&sel.id===id&&!s.done?sel.k:null;
+  const check=()=>{const k=selK;sel=null;
     const kc=n*L.d/dd;
     if(k===kc){right(id);it(id).msg=`<b>Верно!</b> ${t.find1?`Единица = ${fr(L.d,L.d)} — ${otr(L.d)} по ${fr(1,L.d)}.`:`${fr(n,dd)}${dd!==L.d?` = ${fr(kc,L.d)}`:''} — от нуля ${otr(kc)} по ${fr(1,L.d)}.`}`;lastFb=null;}
     else{const tries=s.tries;const st=wrong(id,k);lastFb={id,html:(st.tries===1?'Неверно. ':'Снова неверно. ')+placeHint(t,cur,k,tries)};
       if(st.done)st.msg=`Правильная точка отмечена фиолетовым: ${t.find1?`1 = ${fr(L.d,L.d)} — это ${otr(L.d)} по ${fr(1,L.d)}`:`${fr(n,dd)}${dd!==L.d?` = ${fr(kc,L.d)}`:''} — ${otr(kc)} от нуля`}.`;
-      shakeEl(svg);}
-    save();if(st_ok(id))render();else render();}}));
+      shakeNext=true;}
+    save();render();};
+  const lineBox=lineSVG(L,{markers,sel:selK,bad:s.done?[]:s.bad,fill:L.pic?(selK??(markers.length?lastMarker:0)):0,hoverFill:L.pic,click:j<0?null:k=>{sel={id,k};lastFb=null;render();}});
+  if(shakeNext){shakeNext=false;requestAnimationFrame(()=>shakeEl(lineBox));}
+  body.append(lineBox);
+  if(j>=0)body.append(h('div',{class:'chips',style:'align-items:center;margin:0'},h('span',{style:'font-weight:700;color:var(--ink2)'},selK==null?'Выбери чёрточку на прямой':'Точка выбрана — можно поменять'),h('button',{class:'btn',disabled:selK==null,onclick:check},'Проверить')));
   // feedback: for multi show last done target's message if current not attempted
   let fid=id;if(many&&!lastFb){const doneIds=t.ids.filter(x=>it(x).done);if(!s.tries&&doneIds.length)fid=doneIds[doneIds.length-1];}
   body.append(fbBox(fid));}
@@ -410,6 +419,10 @@ function renderTower(){
   s+=`<path d="M0 ${yb+8} Q130 ${yb-16} 260 ${yb+8} V${H} H0Z" fill="#0d0617"/><path d="M114 ${yb} V${yb-22} Q130 ${yb-38} 146 ${yb-22} V${yb}Z" fill="#2a1608" stroke="#1c1824" stroke-width="3"/>`;
   s+=PUMPKIN(34,yb+30,.55)+PUMPKIN(226,yb+34,.45)+'</svg>';
   const el=document.getElementById('tower');el.innerHTML=s;
+  const mt=document.getElementById('mtower');
+  if(mt){const done=SECTIONS.filter(x=>secDone(x.id)).length;
+    mt.innerHTML=s.replace(/(id="|url\(#)(brick|glw|wc\d)/g,'$1m$2').replace('<svg viewBox="0 0 260 620"','<svg viewBox="0 -10 260 620"')+`<span class="mt-t">Башня:<br><b>${done} из 5</b> этажей</span>`;
+    mt.querySelectorAll('.twf').forEach(g=>g.addEventListener('click',()=>{S.sec=+g.dataset.f;lastFb=null;save();render();}));}
   el.querySelectorAll('.twf').forEach(g=>g.addEventListener('click',()=>{S.sec=+g.dataset.f;lastFb=null;save();render();}));
 }
 
@@ -457,6 +470,7 @@ function celebrate(){if(matchMedia('(prefers-reduced-motion: reduce)').matches||
   const colors=['#ff8a1f','#9dff5a','#c79bff','#ffd23b','#ffffff'];const end=Date.now()+2500;
   (function f(){confetti({particleCount:6,angle:60,spread:60,origin:{x:0,y:.7},colors});confetti({particleCount:6,angle:120,spread:60,origin:{x:1,y:.7},colors});if(Date.now()<end)requestAnimationFrame(f);})();
   setTimeout(()=>confetti({particleCount:180,spread:110,origin:{y:.45},colors}),300);}
+let _w=innerWidth<640;addEventListener('resize',()=>{const w=innerWidth<640;if(w!==_w){_w=w;render();}});
 render();
 </script>
 </html>
